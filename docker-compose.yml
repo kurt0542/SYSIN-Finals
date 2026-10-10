@@ -1,0 +1,89 @@
+services:
+  proxy:
+    build: ./proxy
+    image: playlisthub/proxy:${TAG:-latest}
+    ports:
+      - "8080:80"
+    depends_on:
+      frontend:
+        condition: service_healthy
+      songs-api:
+        condition: service_healthy
+      playlist-api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - frontend-net
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        BUILD_NUMBER: ${TAG:-dev}
+    image: playlisthub/frontend:${TAG:-latest}
+    restart: unless-stopped
+    networks:
+      - frontend-net
+
+  songs-api:
+    build:
+      context: ./songs-api
+      target: production
+    image: playlisthub/songs-api:${TAG:-latest}
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: playlisthub
+      DB_USER: ${DB_USER:-playlist}
+      DB_PASSWORD: ${DB_PASSWORD:-playlist_secret_pass}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - frontend-net
+      - backend-net
+
+  playlist-api:
+    build:
+      context: ./playlist-api
+      target: production
+    image: playlisthub/playlist-api:${TAG:-latest}
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: playlisthub
+      DB_USER: ${DB_USER:-playlist}
+      DB_PASSWORD: ${DB_PASSWORD:-playlist_secret_pass}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - frontend-net
+      - backend-net
+
+  db:
+    build: ./db
+    image: playlisthub/db:${TAG:-latest}
+    environment:
+      POSTGRES_DB: playlisthub
+      POSTGRES_USER: ${DB_USER:-playlist}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-playlist_secret_pass}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d playlisthub"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - backend-net
+
+volumes:
+  pg-data:
+
+networks:
+  frontend-net:
+  backend-net:
