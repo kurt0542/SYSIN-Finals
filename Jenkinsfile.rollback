@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'TARGET_TAG', defaultValue: '', description: 'Build number / Image tag to rollback to (e.g. 1, 2, 3)')
+    }
+
+    environment {
+        COMPOSE_PROJECT_NAME = 'playlisthub'
+        TAG = "${params.TARGET_TAG}"
+    }
+
+    options {
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('Validate Parameter') {
+            steps {
+                script {
+                    if (!params.TARGET_TAG || params.TARGET_TAG.trim() == '') {
+                        error("TARGET_TAG parameter is required for rollback.")
+                    }
+                }
+            }
+        }
+
+        stage('Verify Image Existence') {
+            steps {
+                sh "docker image inspect playlisthub/frontend:${TAG} > /dev/null || (echo 'Image tag ${TAG} does not exist locally!'; exit 1)"
+            }
+        }
+
+        stage('Rollback Deployment') {
+            steps {
+                withCredentials([file(credentialsId: 'playlisthub-env', variable: 'ENV_FILE')]) {
+                    sh 'cp "$ENV_FILE" .env'
+                    sh 'docker compose up -d --no-build --remove-orphans'
+                }
+            }
+        }
+
+        stage('Verify Rollback') {
+            steps {
+                sh '''
+                  for i in $(seq 1 12); do
+                    if docker compose exec -T proxy wget -qO- http://localhost/ | grep -q "Build #${TAG}"; then
+                      echo "Rollback verification PASSED! Now serving Build #${TAG}."
+                      exit 0
+                    fi
+                    echo "Waiting for rollback release... ($i/12)"
+                    sleep 3
+                  done
+                  echo "Rollback verification FAILED!"
+                  exit 1
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'rm -f .env'
+        }
+        success {
+            echo "SUCCESS: Rollback to Build ${TAG} completed and verified."
+        }
+        failure {
+            echo "FAILURE: Rollback to Build ${TAG} failed."
+        }
+    }
+}
