@@ -11,6 +11,9 @@ class SongBase(BaseModel):
 class SongCreate(SongBase):
     pass
 
+class SongUpdate(SongBase):
+    pass
+
 class SongResponse(SongBase):
     id: int
     created_at: Optional[datetime] = None

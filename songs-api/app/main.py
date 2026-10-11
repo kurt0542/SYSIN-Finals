@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, Query, status
 from typing import List, Optional
 import psycopg
-from app.models import SongCreate, SongResponse
+from app.models import SongCreate, SongUpdate, SongResponse
 from app.db import get_db_connection
 
 app = FastAPI(title="Songs Catalog API", version="1.0.0")
@@ -63,6 +63,25 @@ def create_song(song: SongCreate, conn: psycopg.Connection = Depends(get_db_conn
         new_song = cur.fetchone()
         conn.commit()
         return dict(new_song)
+
+@app.put("/{song_id}", response_model=SongResponse)
+def update_song(song_id: int, song: SongUpdate, conn: psycopg.Connection = Depends(get_db_connection)):
+    """Update an existing song record"""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE songs
+            SET title = %s, artist = %s, genre = %s, duration_seconds = %s
+            WHERE id = %s
+            RETURNING id, title, artist, genre, duration_seconds, created_at
+            """,
+            (song.title, song.artist, song.genre, song.duration_seconds, song_id)
+        )
+        updated_song = cur.fetchone()
+        if not updated_song:
+            raise HTTPException(status_code=404, detail=f"Song with id {song_id} not found")
+        conn.commit()
+        return dict(updated_song)
 
 @app.delete("/{song_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_song(song_id: int, conn: psycopg.Connection = Depends(get_db_connection)):

@@ -85,3 +85,87 @@ def test_get_songs_with_mocked_db():
         assert data[0]["title"] == "Mock Song"
     finally:
         app.dependency_overrides.clear()
+
+def test_put_song_success():
+    """Verify PUT /{song_id} updates and returns the updated song"""
+    updated_fake = {
+        "id": 1,
+        "title": "Updated Title",
+        "artist": "Updated Artist",
+        "genre": "Pop",
+        "duration_seconds": 180,
+        "created_at": datetime.now()
+    }
+
+    class MockCursor:
+        def execute(self, query, params=None):
+            pass
+        def fetchone(self):
+            return updated_fake
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+    class MockConn:
+        def cursor(self):
+            return MockCursor()
+        def commit(self):
+            pass
+
+    def fake_db():
+        yield MockConn()
+
+    app.dependency_overrides[get_db_connection] = fake_db
+    try:
+        response = client.put(
+            "/1",
+            json={
+                "title": "Updated Title",
+                "artist": "Updated Artist",
+                "genre": "Pop",
+                "duration_seconds": 180
+            }
+        )
+        assert response.status_code == 200
+        assert response.json()["title"] == "Updated Title"
+    finally:
+        app.dependency_overrides.clear()
+
+def test_put_song_not_found():
+    """Verify PUT /{song_id} returns 404 when song does not exist"""
+    class MockCursor:
+        def execute(self, query, params=None):
+            pass
+        def fetchone(self):
+            return None
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+    class MockConn:
+        def cursor(self):
+            return MockCursor()
+        def commit(self):
+            pass
+
+    def fake_db():
+        yield MockConn()
+
+    app.dependency_overrides[get_db_connection] = fake_db
+    try:
+        response = client.put(
+            "/999",
+            json={
+                "title": "Non-existent",
+                "artist": "Artist",
+                "genre": "Pop",
+                "duration_seconds": 200
+            }
+        )
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()
+    finally:
+        app.dependency_overrides.clear()
+
