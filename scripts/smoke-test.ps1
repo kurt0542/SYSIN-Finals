@@ -17,7 +17,7 @@ if ($TargetTag) {
 Write-Host "==================================================" -ForegroundColor Cyan
 
 for ($i = 1; $i -le $MaxRetries; $i++) {
-    Write-Host "Attempt $i of $MaxRetries: Checking service endpoints..."
+    Write-Host "Attempt $i of ${MaxRetries}: Checking service endpoints..."
     
     $songsOk = $false
     $playlistsOk = $false

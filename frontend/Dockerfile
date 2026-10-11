@@ -1,6 +1,6 @@
 FROM nginx:1.27-alpine
 
-ARG BUILD_NUMBER=dev
+ARG BUILD_NUMBER=1
 
 # Copy static assets to nginx html directory
 COPY src/ /usr/share/nginx/html/
