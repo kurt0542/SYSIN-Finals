@@ -19,7 +19,7 @@ services:
     build:
       context: ./frontend
       args:
-        BUILD_NUMBER: ${TAG:-dev}
+        BUILD_NUMBER: ${TAG:-1}
     image: playlisthub/frontend:${TAG:-latest}
     restart: unless-stopped
     networks:
