@@ -123,6 +123,15 @@ app.post('/:id/songs', async (req, res) => {
       return res.status(404).json({ error: `Song ${song_id} not found` });
     }
 
+    // Check if song is already in playlist
+    const duplicateCheck = await db.query(
+      'SELECT song_id FROM playlist_songs WHERE playlist_id = $1 AND song_id = $2',
+      [id, song_id]
+    );
+    if (duplicateCheck.rows.length > 0) {
+      return res.status(409).json({ error: 'Song is already in this playlist' });
+    }
+
     // Get current max position
     const posResult = await db.query(
       'SELECT COALESCE(MAX(position), 0) + 1 AS next_pos FROM playlist_songs WHERE playlist_id = $1',

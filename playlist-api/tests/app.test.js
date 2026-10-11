@@ -41,6 +41,19 @@ describe('Playlist API route tests', () => {
     );
   });
 
+  test('POST /:id/songs returns 409 Conflict when song is already in playlist', async () => {
+    // Playlist exists
+    db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+    // Song exists
+    db.query.mockResolvedValueOnce({ rows: [{ id: 10 }] });
+    // Duplicate check finds existing association
+    db.query.mockResolvedValueOnce({ rows: [{ song_id: 10 }] });
+
+    const res = await request(app).post('/1/songs').send({ song_id: 10 });
+    expect(res.statusCode).toBe(409);
+    expect(res.body.error).toMatch(/already in this playlist/i);
+  });
+
   test('POST /:id/songs adds song successfully when not duplicate', async () => {
     // Playlist exists
     db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
