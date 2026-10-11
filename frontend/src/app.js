@@ -192,21 +192,59 @@ async function deletePlaylist(playlistId) {
     }
 }
 
-// Add song to playlist
-async function promptAddToPlaylist(songId) {
+// Add song to playlist via modal selector
+let songToAddId = null;
+
+function promptAddToPlaylist(songId) {
     if (allPlaylists.length === 0) {
         showAlert('Please create a playlist first!', 'error');
         return;
     }
-    const targetId = allPlaylists[0].id;
+
+    const song = allSongs.find(s => s.id === songId);
+    if (!song) return;
+
+    songToAddId = songId;
+    document.getElementById('modal-song-info').textContent = `"${song.title}" by ${song.artist}`;
+
+    const select = document.getElementById('modal-playlist-select');
+    select.innerHTML = allPlaylists.map(p => 
+        `<option value="${p.id}" ${p.id === selectedPlaylistId ? 'selected' : ''}>${escapeHtml(p.name)} (${p.song_count} tracks)</option>`
+    ).join('');
+
+    document.getElementById('add-modal').classList.remove('hidden');
+}
+
+function closeAddModal() {
+    document.getElementById('add-modal').classList.add('hidden');
+    songToAddId = null;
+}
+
+document.getElementById('cancel-modal-btn').addEventListener('click', closeAddModal);
+
+document.getElementById('confirm-add-btn').addEventListener('click', async () => {
+    if (!songToAddId) return;
+
+    const select = document.getElementById('modal-playlist-select');
+    const targetId = select.value;
+
     try {
         const res = await fetch(`${API.playlists}${targetId}/songs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ song_id: songId })
+            body: JSON.stringify({ song_id: songToAddId })
         });
+
+        if (res.status === 409) {
+            showAlert('Song is already in this playlist!', 'error');
+            closeAddModal();
+            return;
+        }
+
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
         showAlert('Added song to playlist!');
+        closeAddModal();
         await loadPlaylists();
         if (selectedPlaylistId && String(selectedPlaylistId) === String(targetId)) {
             viewPlaylist(selectedPlaylistId);
@@ -214,7 +252,7 @@ async function promptAddToPlaylist(songId) {
     } catch (err) {
         showAlert('Failed to add song to playlist', 'error');
     }
-}
+});
 
 // Remove song from playlist
 async function removeSongFromPlaylist(playlistId, songId) {
