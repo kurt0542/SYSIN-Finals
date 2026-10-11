@@ -82,6 +82,22 @@
         </div>
     </main>
 
+    <!-- Modal for selecting which playlist to add a track to -->
+    <div id="add-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add Song to Playlist</h3>
+            <p id="modal-song-info" class="meta-info" style="margin: 0.75rem 0;"></p>
+            <div style="margin-bottom: 1rem;">
+                <label for="modal-playlist-select" style="display:block; margin-bottom: 0.35rem; font-size: 0.85rem; font-weight:600;">Choose Target Playlist:</label>
+                <select id="modal-playlist-select" style="width: 100%;"></select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-add-btn">Add to Playlist</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="footer">
         <div class="footer-container">
             <p>System Architecture and Integration Final Project &bull; Containerized Infrastructure</p>
