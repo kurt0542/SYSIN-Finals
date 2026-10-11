@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlaylistHub - Multi-Module Music Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <h1 id="app-title">PlaylistHub</h1>
+            <div class="build-info">
+                <span class="badge" id="build-badge">Build #__BUILD_NUMBER__</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Status Notification Banner -->
+        <div id="alert-box" class="alert hidden"></div>
+
+        <div class="grid">
+            <!-- Left Column: Songs Catalog -->
+            <section class="card">
+                <div class="card-header">
+                    <h2>Music Catalog</h2>
+                    <span class="subtext" id="songs-count">Loading...</span>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" id="song-search" placeholder="Search by song or artist...">
+                    <select id="genre-filter">
+                        <option value="">All Genres</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table id="songs-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Artist</th>
+                                <th>Genre</th>
+                                <th>Duration</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="songs-list">
+                            <tr><td colspan="5" class="text-center">Loading songs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Right Column: Playlists -->
+            <section class="card">
+                <div class="card-header">
+                    <h2>Playlists</h2>
+                    <span class="subtext" id="playlists-count">Loading...</span>
+                </div>
+
+                <form id="create-playlist-form" class="form-inline">
+                    <input type="text" id="playlist-name-input" placeholder="New Playlist Name" required>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </form>
+
+                <div id="playlists-list" class="playlists-container">
+                    <div class="text-center">Loading playlists...</div>
+                </div>
+
+                <!-- Active Playlist Details Modal / View -->
+                <div id="playlist-details" class="playlist-details-box hidden">
+                    <div class="details-header">
+                        <h3 id="active-playlist-name">Playlist Details</h3>
+                        <button class="btn btn-sm btn-secondary" id="close-details-btn">&times;</button>
+                    </div>
+                    <p class="meta-info">Total Duration: <strong id="active-playlist-duration">0s</strong></p>
+                    <ul id="active-playlist-tracks" class="tracks-list"></ul>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <p>System Architecture and Integration Final Project &bull; Containerized Infrastructure</p>
+            <p class="footer-build">Current Release: <strong>Build #__BUILD_NUMBER__</strong></p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
