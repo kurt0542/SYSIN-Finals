@@ -62,9 +62,9 @@ pipeline {
                 sh '''
                   echo "Verifying deployment health and build label..."
                   for i in $(seq 1 15); do
-                    if docker compose exec -T proxy wget -qO- http://localhost/api/songs/health \
-                    && docker compose exec -T proxy wget -qO- http://localhost/api/playlists/health \
-                    && docker compose exec -T proxy wget -qO- http://localhost/ | grep -q "Build #${TAG}"; then
+                    if docker compose exec -T proxy wget -qO- http://127.0.0.1/api/songs/health \
+                    && docker compose exec -T proxy wget -qO- http://127.0.0.1/api/playlists/health \
+                    && docker compose exec -T proxy wget -qO- http://127.0.0.1/ | grep -q "Build #${TAG}"; then
                       echo "Smoke test PASSED! Build ${TAG} is live."
                       exit 0
                     fi
