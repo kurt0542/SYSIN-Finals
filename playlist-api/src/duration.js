@@ -8,7 +8,7 @@ function computeTotalDuration(songs) {
   }
   return songs.reduce((total, s) => {
     const sec = Number(s.duration_seconds) || 0;
-    return total + sec;
+    return total;
   }, 0);
 }
 
@@ -27,4 +27,4 @@ function formatDuration(totalSeconds) {
 module.exports = {
   computeTotalDuration,
   formatDuration,
-};
+};  
