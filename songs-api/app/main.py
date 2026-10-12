@@ -1,21 +1,25 @@
-from fastapi import FastAPI, Depends, HTTPException, Query, status
-from typing import List, Optional
+from typing import Annotated
+
 import psycopg
-from app.models import SongCreate, SongUpdate, SongResponse
+from fastapi import Depends, FastAPI, HTTPException, status
+
 from app.db import get_db_connection
+from app.models import SongCreate, SongResponse, SongUpdate
 
 app = FastAPI(title="Songs Catalog API", version="1.0.0")
+
 
 @app.get("/health", status_code=status.HTTP_200_OK)
 def health_check():
     """Health endpoint for container and proxy checks"""
     return {"status": "ok", "service": "songs-api"}
 
-@app.get("/", response_model=List[SongResponse])
+
+@app.get("/", response_model=list[SongResponse])
 def get_songs(
-    genre: Optional[str] = None,
-    q: Optional[str] = None,
-    conn: psycopg.Connection = Depends(get_db_connection)
+    conn: Annotated[psycopg.Connection, Depends(get_db_connection)],
+    genre: str | None = None,
+    q: str | None = None,
 ):
     """Retrieve all songs with optional filtering by genre or search query"""
     query = "SELECT id, title, artist, genre, duration_seconds, created_at FROM songs WHERE 1=1"
@@ -35,8 +39,12 @@ def get_songs(
         rows = cur.fetchall()
         return [dict(row) for row in rows]
 
+
 @app.get("/{song_id}", response_model=SongResponse)
-def get_song(song_id: int, conn: psycopg.Connection = Depends(get_db_connection)):
+def get_song(
+    song_id: int,
+    conn: Annotated[psycopg.Connection, Depends(get_db_connection)],
+):
     """Retrieve a single song by ID"""
     with conn.cursor() as cur:
         cur.execute(
@@ -48,8 +56,12 @@ def get_song(song_id: int, conn: psycopg.Connection = Depends(get_db_connection)
             raise HTTPException(status_code=404, detail=f"Song with id {song_id} not found")
         return dict(row)
 
+
 @app.post("/", response_model=SongResponse, status_code=status.HTTP_201_CREATED)
-def create_song(song: SongCreate, conn: psycopg.Connection = Depends(get_db_connection)):
+def create_song(
+    song: SongCreate,
+    conn: Annotated[psycopg.Connection, Depends(get_db_connection)],
+):
     """Create a new song record"""
     with conn.cursor() as cur:
         cur.execute(
@@ -64,8 +76,13 @@ def create_song(song: SongCreate, conn: psycopg.Connection = Depends(get_db_conn
         conn.commit()
         return dict(new_song)
 
+
 @app.put("/{song_id}", response_model=SongResponse)
-def update_song(song_id: int, song: SongUpdate, conn: psycopg.Connection = Depends(get_db_connection)):
+def update_song(
+    song_id: int,
+    song: SongUpdate,
+    conn: Annotated[psycopg.Connection, Depends(get_db_connection)],
+):
     """Update an existing song record"""
     with conn.cursor() as cur:
         cur.execute(
@@ -83,8 +100,12 @@ def update_song(song_id: int, song: SongUpdate, conn: psycopg.Connection = Depen
         conn.commit()
         return dict(updated_song)
 
+
 @app.delete("/{song_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_song(song_id: int, conn: psycopg.Connection = Depends(get_db_connection)):
+def delete_song(
+    song_id: int,
+    conn: Annotated[psycopg.Connection, Depends(get_db_connection)],
+):
     """Delete a song by ID"""
     with conn.cursor() as cur:
         cur.execute("DELETE FROM songs WHERE id = %s RETURNING id", (song_id,))
@@ -92,4 +113,4 @@ def delete_song(song_id: int, conn: psycopg.Connection = Depends(get_db_connecti
         if not deleted:
             raise HTTPException(status_code=404, detail=f"Song with id {song_id} not found")
         conn.commit()
-        return None
+        return

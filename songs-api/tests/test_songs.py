@@ -1,12 +1,15 @@
+from datetime import datetime
+
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
-from datetime import datetime
+
+from app.db import get_db_connection
 from app.main import app
 from app.models import SongCreate
-from app.db import get_db_connection
 
 client = TestClient(app)
+
 
 def test_health_endpoint():
     """Verify health endpoint responds with HTTP 200 and expected status"""
@@ -15,6 +18,7 @@ def test_health_endpoint():
     data = response.json()
     assert data["status"] == "ok"
     assert data["service"] == "songs-api"
+
 
 def test_song_model_validation_valid():
     """Valid song payload passes validation"""
@@ -27,6 +31,7 @@ def test_song_model_validation_valid():
     assert song.title == "Midnight City"
     assert song.duration_seconds == 244
 
+
 def test_song_model_validation_invalid_duration():
     """Rejects zero or negative durations"""
     with pytest.raises(ValidationError):
@@ -38,6 +43,7 @@ def test_song_model_validation_invalid_duration():
     with pytest.raises(ValidationError):
         SongCreate(title="Test", artist="Test", genre="Pop", duration_seconds=5000)
 
+
 def test_song_model_validation_empty_fields():
     """Rejects empty string for required fields"""
     with pytest.raises(ValidationError):
@@ -45,6 +51,7 @@ def test_song_model_validation_empty_fields():
 
     with pytest.raises(ValidationError):
         SongCreate(title="Test", artist="", genre="Pop", duration_seconds=180)
+
 
 def test_get_songs_with_mocked_db():
     """Verify GET / returns mocked list of songs without requiring a live DB"""
@@ -85,6 +92,7 @@ def test_get_songs_with_mocked_db():
         assert data[0]["title"] == "Mock Song"
     finally:
         app.dependency_overrides.clear()
+
 
 def test_put_song_success():
     """Verify PUT /{song_id} updates and returns the updated song"""
@@ -131,6 +139,7 @@ def test_put_song_success():
         assert response.json()["title"] == "Updated Title"
     finally:
         app.dependency_overrides.clear()
+
 
 def test_put_song_not_found():
     """Verify PUT /{song_id} returns 404 when song does not exist"""
